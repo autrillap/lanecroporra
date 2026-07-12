@@ -81,7 +81,7 @@ function AdminContent() {
     }
   }, [currentUser, loading]);
 
-  const isAdmin = user?.role === "admin" || "creator";
+  const isAdmin = user?.role === "admin" || user?.role === "creator";
 
   // All data
   const [allUsers, setAllUsers] = useState<UserDoc[] | undefined | null>(
