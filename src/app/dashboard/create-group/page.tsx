@@ -11,7 +11,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { createGroup } from "@/lib/firestore/groups";
+import { createGroup } from "@/lib/db/groups";
 import { useAuth } from "@/providers/auth-provider";
 import { useSidebar } from "@/providers/sidebar-provider";
 import { ArrowLeft, ArrowRight, Settings, Users } from "lucide-react";
@@ -26,7 +26,7 @@ export default function CreateGroup() {
   const [groupData, setGroupData] = useState({
     name: "",
     description: "",
-    maxBets: 10,
+    max_bets: 10,
     deadline: `${new Date().getFullYear()}-12-31`,
   });
   const { reloadGroups } = useSidebar();
@@ -38,9 +38,9 @@ export default function CreateGroup() {
       } else {
         const { groupId } = await createGroup({
           ...groupData,
-          creatorId: currentUser!.uid,
-          deadline: new Date(groupData.deadline),
-          settings: { maxBets: groupData.maxBets },
+          creator_id: currentUser!.id,
+          deadline: new Date(groupData.deadline).toISOString(),
+          max_bets: groupData.max_bets,
         });
         reloadGroups();
         router.push(`/dashboard/${groupId}`);
@@ -60,7 +60,7 @@ export default function CreateGroup() {
 
   const isStep1Valid =
     groupData.name.trim() !== "" && groupData.description.trim() !== "";
-  const isStep2Valid = groupData.maxBets > 0 && groupData.deadline !== "";
+  const isStep2Valid = groupData.max_bets > 0 && groupData.deadline !== "";
 
   return (
     <div className="min-h-screen flex flex-1 bg-background p-4 sm:p-6 lg:p-8">
@@ -212,26 +212,26 @@ export default function CreateGroup() {
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="space-y-2">
-                <Label htmlFor="maxBets" className="text-sm font-medium">
+                <Label htmlFor="max_bets" className="text-sm font-medium">
                   Número máximo de apuestas por persona *
                 </Label>
                 <Input
-                  id="maxBets"
+                  id="max_bets"
                   type="number"
                   min="1"
                   max="50"
-                  value={groupData.maxBets}
+                  value={groupData.max_bets}
                   onChange={(e) =>
                     setGroupData({
                       ...groupData,
-                      maxBets: Number.parseInt(e.target.value) || 0,
+                      max_bets: Number.parseInt(e.target.value) || 0,
                     })
                   }
                   className="text-base sm:text-sm"
                 />
                 <p className="text-xs text-muted-foreground">
                   Cada miembro podrá apostar por un máximo de{" "}
-                  {groupData.maxBets} famosos
+                  {groupData.max_bets} famosos
                 </p>
               </div>
 

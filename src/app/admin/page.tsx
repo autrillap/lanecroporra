@@ -22,9 +22,9 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { getAllGroups } from "@/lib/firestore/groups";
-import { reviewAllRecords } from "@/lib/firestore/review-record";
-import { getAllUsers, getUserById } from "@/lib/firestore/users";
+import { getAllGroups } from "@/lib/db/groups";
+import { reviewAllRecords } from "@/lib/db/review-record";
+import { getAllUsers, getUserById } from "@/lib/db/users";
 import { GroupDoc } from "@/models/Group";
 import { UserDoc } from "@/models/User";
 import { useAuth } from "@/providers/auth-provider";
@@ -69,7 +69,7 @@ function AdminContent() {
   useEffect(() => {
     if (currentUser && !loading) {
       const fetchUser = async () => {
-        const userData = await getUserById(currentUser.uid);
+        const userData = await getUserById(currentUser.id);
         if (!userData) {
           console.error("User not found");
           setUser(null);

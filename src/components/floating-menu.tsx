@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { getUserById } from "@/lib/firestore/users";
+import { getUserById } from "@/lib/db/users";
 import { UserDoc } from "@/models/User";
 import { useAuth } from "@/providers/auth-provider";
 import { Menu, ShieldUser, User as UserIcon, X } from "lucide-react";
@@ -17,7 +17,7 @@ export function FloatingMenu() {
   useEffect(() => {
     if (currentUser && !loading) {
       const fetchUser = async () => {
-        const userData = await getUserById(currentUser.uid);
+        const userData = await getUserById(currentUser.id);
         if (userData) setUser(userData);
       };
       fetchUser();

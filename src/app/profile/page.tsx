@@ -10,11 +10,10 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { auth } from "@/lib/firebase/clientApp";
-import { getUserById, getUserStats } from "@/lib/firestore/users";
+import { createClient } from "@/lib/supabase/client";
+import { getUserById, getUserStats } from "@/lib/db/users";
 import { UserDoc, UserStats } from "@/models/User";
 import { useAuth } from "@/providers/auth-provider";
-import { signOut } from "firebase/auth";
 import {
   ArrowLeft,
   Award,
@@ -49,13 +48,13 @@ export default function ProfilePage() {
     if (currentUser && !loading) {
       const fetchUser = async () => {
         try {
-          const userData = await getUserById(currentUser.uid);
+          const userData = await getUserById(currentUser.id);
           if (!userData) {
             setUser(null);
             return;
           }
           setUser(userData);
-          const stats = await getUserStats(userData.uid);
+          const stats = await getUserStats(userData.id);
           setUserStats(stats || null);
         } catch (error) {
           console.error("Error fetching profile:", error);
@@ -119,17 +118,17 @@ export default function ProfilePage() {
                 <div className="-mt-12 mb-4">
                   <Avatar className="h-24 w-24 border-4 border-background shadow-xl">
                     <AvatarImage
-                      src={user.photoURL}
-                      alt={user.displayName}
+                      src={user.avatar_url}
+                      alt={user.name}
                       className="object-cover"
                     />
                     <AvatarFallback className="bg-primary text-primary-foreground text-3xl font-bold">
-                      {user.displayName?.substring(0, 2).toUpperCase()}
+                      {user.name?.substring(0, 2).toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
                 </div>
                 <CardTitle className="text-2xl font-bold tracking-tight">
-                  {user.displayName}
+                  {user.name}
                 </CardTitle>
                 <CardDescription className="text-sm font-medium">
                   {user.email}
@@ -144,7 +143,7 @@ export default function ProfilePage() {
                     {new Intl.DateTimeFormat("es-ES", {
                       month: "short",
                       year: "numeric",
-                    }).format(user.createdAt)}
+                    }).format(new Date(user.created_at))}
                   </Badge>
                   <Badge
                     variant="outline"
@@ -182,7 +181,8 @@ export default function ProfilePage() {
                   variant="ghost"
                   className="w-full justify-start text-xs font-semibold h-9 text-red-500 hover:text-red-600 hover:bg-red-50"
                   onClick={async () => {
-                    await signOut(auth);
+                    const supabase = createClient();
+                    await supabase.auth.signOut();
                     router.push("/login");
                   }}
                 >

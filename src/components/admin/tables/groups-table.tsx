@@ -34,7 +34,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { closeGroupLists } from "@/lib/firestore/groups";
+import { closeGroupLists } from "@/lib/db/groups";
 import { GroupDoc } from "@/models/Group";
 import {
   Activity,
@@ -51,7 +51,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { FilterHeader } from "./filter-header";
 
-type SortKey = "name" | "members" | "deadline" | "createdAt";
+type SortKey = "name" | "members" | "deadline" | "created_at";
 
 export const AdminGroupsTable = ({
   searchTerm,
@@ -112,8 +112,8 @@ export const AdminGroupsTable = ({
       comparison =
         Object.keys(a.members || {}).length -
         Object.keys(b.members || {}).length;
-    } else if (key === "deadline" || key === "createdAt") {
-      comparison = (a[key]?.getTime() || 0) - (b[key]?.getTime() || 0);
+    } else if (key === "deadline" || key === "created_at") {
+      comparison = (new Date(a[key] as string || 0).getTime()) - (new Date(b[key] as string || 0).getTime());
     } else {
       const aVal = String(a[key as keyof typeof a] || "");
       const bVal = String(b[key as keyof typeof b] || "");
@@ -204,7 +204,7 @@ export const AdminGroupsTable = ({
                     <TableHead className="hidden md:table-cell text-center">
                       <Button
                         variant="ghost"
-                        onClick={() => handleSort("createdAt")}
+                        onClick={() => handleSort("created_at")}
                         className="p-0 font-bold"
                       >
                         Creación <ArrowUpDown className="ml-1 h-3 w-3" />
@@ -240,10 +240,10 @@ export const AdminGroupsTable = ({
                         </Badge>
                       </TableCell>
                       <TableCell className="hidden md:table-cell text-xs italic text-center">
-                        {formatDate(group.deadline)}
+                        {formatDate(new Date(group.deadline))}
                       </TableCell>
                       <TableCell className="hidden md:table-cell text-xs italic text-center">
-                        {formatDate(group.createdAt)}
+                        {formatDate(new Date(group.created_at))}
                       </TableCell>
                       <TableCell className="text-right px-4">
                         <div className="flex justify-end gap-1">
@@ -331,7 +331,7 @@ export const AdminGroupsTable = ({
                         Creador (UID)
                       </p>
                       <p className="text-xs font-mono truncate">
-                        {selectedGroup.creatorId}
+                        {selectedGroup.creator_id}
                       </p>
                     </div>
                     <div className="p-3 border rounded-lg">
@@ -340,7 +340,7 @@ export const AdminGroupsTable = ({
                       </p>
                       <p className="text-sm flex items-center gap-1 font-medium">
                         <Calendar className="w-3 h-3" />{" "}
-                        {formatDate(selectedGroup.deadline)}
+                        {formatDate(new Date(selectedGroup.deadline))}
                       </p>
                     </div>
                   </div>
@@ -381,7 +381,7 @@ export const AdminGroupsTable = ({
                                   </Badge>
                                 </TableCell>
                                 <TableCell className="py-2 text-right text-muted-foreground">
-                                  {formatDate(m.joinedAt)}
+                                  {formatDate(new Date(m.joined_at))}
                                 </TableCell>
                               </TableRow>
                             )
@@ -399,7 +399,7 @@ export const AdminGroupsTable = ({
                       <Settings className="w-4 h-4" /> Ajustes
                     </h4>
                     <div className="space-y-3">
-                      {Object.entries(selectedGroup.settings || {}).map(
+                      {Object.entries({ max_bets: selectedGroup.max_bets }).map(
                         ([key, val]) => (
                           <div
                             key={key}
@@ -419,7 +419,7 @@ export const AdminGroupsTable = ({
                           Link de Invitación
                         </p>
                         <p className="text-[10px] bg-background p-2 rounded border truncate font-mono text-blue-500">
-                          {selectedGroup.inviteLink || "No generado"}
+                          {selectedGroup.invite_link || "No generado"}
                         </p>
                       </div>
                     </div>
@@ -430,7 +430,7 @@ export const AdminGroupsTable = ({
                       <Activity className="w-4 h-4" /> Registro de Actividad
                     </h4>
                     <div className="space-y-3 border-l-2 ml-2 pl-4">
-                      {selectedGroup.activityLog
+                      {selectedGroup.activity_logs
                         ?.slice(-5)
                         .reverse()
                         .map((log, i) => (
@@ -441,9 +441,7 @@ export const AdminGroupsTable = ({
                             </p>
                             <p className="text-[9px] text-muted-foreground italic">
                               {formatDate(
-                                log.timestamp?.toDate
-                                  ? log.timestamp.toDate()
-                                  : new Date()
+                                new Date(log.created_at || new Date())
                               )}
                             </p>
                           </div>
@@ -467,10 +465,10 @@ export const AdminGroupsTable = ({
               ¿Confirmar cierre de &quot;{groupToClose?.name}&quot;?
             </AlertDialogTitle>
             <AlertDialogDescription className="pt-2 text-foreground">
-              {groupToClose && groupToClose.deadline.getTime() > Date.now() ? (
+              {groupToClose && new Date(groupToClose.deadline).getTime() > Date.now() ? (
                 <span className="font-bold text-red-600 dark:text-red-400">
                   ¡ATENCIÓN!: La fecha límite aún no ha pasado (
-                  {formatDate(groupToClose.deadline)}). Si cierras el grupo
+                  {formatDate(new Date(groupToClose.deadline))}). Si cierras el grupo
                   ahora, los usuarios ya NO podrán editar sus listas antes de
                   tiempo.
                 </span>

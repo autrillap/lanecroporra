@@ -1,8 +1,7 @@
 "use client";
 
-import { auth } from "@/lib/firebase/clientApp";
-import { deleteCookie, setCookie } from "cookies-next";
-import { onIdTokenChanged, User } from "firebase/auth";
+import { createClient } from "@/lib/supabase/client";
+import { User } from "@supabase/supabase-js";
 import { createContext, useContext, useEffect, useState } from "react";
 
 interface AuthContextValue {
@@ -18,21 +17,27 @@ const AuthContext = createContext<AuthContextValue>({
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const supabase = createClient();
 
   useEffect(() => {
-    const unsubscribe = onIdTokenChanged(auth, async (user) => {
-      setCurrentUser(user);
-      if (user) {
-        const token = await user.getIdToken();
-        setCookie("__session", token);
-      } else {
-        deleteCookie("__session");
-      }
+    // Obtener sesión inicial
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setCurrentUser(session?.user ?? null);
       setLoading(false);
     });
 
-    return unsubscribe;
-  }, []);
+    // Escuchar cambios de estado
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setCurrentUser(session?.user ?? null);
+      setLoading(false);
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [supabase.auth]);
 
   return (
     <AuthContext.Provider value={{ currentUser, loading }}>

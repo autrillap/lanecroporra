@@ -1,15 +1,13 @@
 export interface UserDoc {
-  uid: string;
+  id: string;
   email: string;
-  photoURL?: string;
-  displayName: string;
-  createdAt: Date;
-  groups: Array<string>;
+  name: string;
+  avatar_url?: string;
   role?: "user" | "admin" | "creator";
-  status: "active" | "inactive" | "banned";
-  tier?: "free" | "pro";
-  victories?: number;
-  createdGroupsCount?: number;
+  status?: string;
+  groups?: string[];
+  tier?: string;
+  created_at: string;
 }
 
 export interface UserStats {

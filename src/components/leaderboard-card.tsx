@@ -1,7 +1,7 @@
-import { getUserById } from "@/lib/firestore/users";
+import { getUserById } from "@/lib/db/users";
 import { MemberDoc } from "@/models/Group";
 import { UserDoc } from "@/models/User";
-import { User } from "firebase/auth";
+import { User } from "@supabase/supabase-js";
 import { Eye, EyeOff } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Button } from "./ui/button";
@@ -38,31 +38,31 @@ export function LeaderBoardCard({
         </div>
         <span
           className={`text-sm lg:text-base truncate ${
-            userDoc.displayName === currentUser?.displayName
+            userDoc.id === currentUser?.id
               ? "font-semibold"
               : ""
           }`}
         >
-          {userDoc.displayName === currentUser?.displayName
+          {userDoc.id === currentUser?.id
             ? "Tú"
-            : userDoc.displayName}
+            : userDoc.name}
         </span>
       </div>
       <div className="flex items-center gap-2 lg:gap-3 flex-shrink-0">
         <div className="text-right">
           <p className="font-semibold text-sm lg:text-base">
-            {playerData.list.points} pts
+            {playerData.list?.points || 0} pts
           </p>
         </div>
-        {userDoc.displayName !== currentUser?.displayName && (
+        {userDoc.id !== currentUser?.id && (
           <Button
             variant="ghost"
             size="sm"
             className="h-8 w-8 p-0 hover:bg-muted"
             onClick={() => onClick(playerUid)}
-            disabled={!playerData.list.bets}
+            disabled={!((playerData?.list?.bets?.length || 0) > 0)}
           >
-            {playerData.list.bets ? (
+            {(playerData?.list?.bets?.length || 0) > 0 ? (
               <Eye className="w-4 h-4 text-muted-foreground hover:text-foreground" />
             ) : (
               <EyeOff className="w-4 h-4 text-muted-foreground/50" />

@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useDebounce } from "@/hooks/useDebounce";
-import { getGroupById, updateList } from "@/lib/firestore/groups";
+import { getGroupById, updateList } from "@/lib/db/groups";
 import { BetDoc } from "@/models/Bet";
 import { GroupDoc } from "@/models/Group";
 import { ListDoc } from "@/models/List";
@@ -39,7 +39,7 @@ type WikiSuggestion = {
   id: string;
   name: string;
   snippet: string;
-  wikidataId: string;
+  wikidata_id: string;
   isAlive: boolean;
   age: number | null;
 };
@@ -84,11 +84,11 @@ export default function EditListPage({
     const fetchGroupData = async () => {
       if (!groupId) return;
       setGroupData(undefined);
-      const data = await getGroupById(groupId, currentUser?.uid);
+      const data = await getGroupById(groupId, currentUser?.id);
       if (data) {
         setGroupData(data);
-        if (currentUser?.uid && data.members![currentUser?.uid].list) {
-          setCurrentList(data.members![currentUser?.uid].list);
+        if (currentUser?.id && data.members![currentUser?.id].list) {
+          setCurrentList(data.members![currentUser?.id].list!);
         }
         return;
       }
@@ -101,7 +101,7 @@ export default function EditListPage({
     const updateTimeLeft = () => {
       if (!groupData) return;
       const now = new Date();
-      const diff = groupData.deadline.getTime() - now.getTime();
+      const diff = new Date(groupData.deadline).getTime() - now.getTime();
 
       if (diff <= 0) {
         setTimeLeft({ days: 0, hours: 0 });
@@ -207,7 +207,7 @@ export default function EditListPage({
                   id: item.id,
                   name: label,
                   snippet: description || "Person",
-                  wikidataId: item.id,
+                  wikidata_id: item.id,
                   isAlive,
                   age,
                 };
@@ -230,9 +230,9 @@ export default function EditListPage({
 
   const addBetToList = (newBet: BetDoc) => {
     setCurrentList((prev) => {
-      if (Object.keys(prev.bets).length >= groupData!.settings.maxBets)
+      if (Object.keys(prev.bets).length >= groupData!.max_bets)
         return prev;
-      if (prev.bets.some((bet) => bet.wikidataId === newBet.wikidataId))
+      if (prev.bets.some((bet) => bet.wikidata_id === newBet.wikidata_id))
         return prev;
 
       return { ...prev, bets: [...prev.bets, newBet] };
@@ -248,7 +248,7 @@ export default function EditListPage({
   };
 
   const saveList = async () => {
-    await updateList(groupId!, currentUser!.uid, currentList);
+    await updateList(groupId!, currentUser!.id, currentList);
     setHasChanges(false);
     redirect("/dashboard/" + groupId);
   };
@@ -283,7 +283,7 @@ export default function EditListPage({
     !(
       currentUser &&
       groupData.members &&
-      Object.keys(groupData.members!).includes(currentUser.uid)
+      Object.keys(groupData.members!).includes(currentUser.id)
     )
   ) {
     return (
@@ -360,18 +360,18 @@ export default function EditListPage({
                   <span className="text-lg">Mi Selección</span>
                   <Badge
                     variant={
-                      currentList.bets.length === groupData!.settings.maxBets
+                      currentList.bets.length === groupData!.max_bets
                         ? "default"
                         : "secondary"
                     }
                   >
-                    {currentList.bets.length} / {groupData!.settings.maxBets}
+                    {currentList.bets.length} / {groupData!.max_bets}
                   </Badge>
                 </CardTitle>
                 <CardDescription>
                   {isReadOnly
                     ? "El período de edición ha finalizado. Esta es tu lista oficial para el año."
-                    : `Añade hasta ${groupData!.settings.maxBets} famosos.`}
+                    : `Añade hasta ${groupData!.max_bets} famosos.`}
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -481,12 +481,12 @@ export default function EditListPage({
                       <div className="space-y-2">
                         {filteredSuggestions.map((person) => {
                           const isInList = currentList.bets.some(
-                            (b) => b.wikidataId === person.wikidataId
+                            (b) => b.wikidata_id === person.wikidata_id
                           );
                           const canAdd =
                             person.isAlive &&
                             currentList.bets.length <
-                              groupData!.settings.maxBets &&
+                              groupData!.max_bets &&
                             !isInList;
 
                           return (
@@ -498,7 +498,7 @@ export default function EditListPage({
                                   ...person,
                                   status: "alive",
                                   type: "default",
-                                })
+                                } as unknown as BetDoc)
                               }
                               className={`flex items-center justify-between p-3 rounded-lg border transition-all ${
                                 isInList

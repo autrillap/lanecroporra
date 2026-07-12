@@ -34,8 +34,8 @@ import {
   promoteToAdmin,
   setNameStatusAcrossGroup,
   updateGroup,
-} from "@/lib/firestore/groups";
-import { generateInvite } from "@/lib/firestore/invites";
+} from "@/lib/db/groups";
+import { generateInvite } from "@/lib/db/invites";
 import { GroupDoc, UpdateGroupDoc } from "@/models/Group";
 import { useAuth } from "@/providers/auth-provider";
 import { useSidebar } from "@/providers/sidebar-provider";
@@ -79,7 +79,7 @@ export default function GroupManagementModal({
 
   const [groupName, setGroupName] = useState(group.name);
   const [groupDescription, setGroupDescription] = useState(group.description);
-  const [maxBets, setMaxBets] = useState(group!.settings.maxBets);
+  const [max_bets, setMaxBets] = useState(group!.max_bets);
   const [deadline, setDeadline] = useState(group.deadline);
   const [saving, setSaving] = useState(false);
 
@@ -89,7 +89,7 @@ export default function GroupManagementModal({
 
   // === Actions ===
   const handleGenerateNewInvite = async () => {
-    await generateInvite(group.id, currentUser!.uid);
+    await generateInvite(group.id, currentUser!.id);
     reloadGroupData();
   };
 
@@ -100,7 +100,7 @@ export default function GroupManagementModal({
   };
 
   const handleConfirmDeleteGroup = async () => {
-    await deleteGroup(group.id, currentUser.uid);
+    await deleteGroup(group.id, currentUser.id);
     setDeleteDialogOpen(false);
     reloadGroupData();
     reloadGroups();
@@ -114,9 +114,7 @@ export default function GroupManagementModal({
         name: groupName,
         description: groupDescription,
         deadline: deadline,
-        settings: {
-          maxBets: maxBets,
-        },
+        max_bets: max_bets,
       };
       await updateGroup(group.id, updatedGroup);
       reloadGroupData();
@@ -197,8 +195,8 @@ export default function GroupManagementModal({
                     Generar Nuevo Enlace
                   </Button>
                   <div className="space-y-2 max-w-min overflow-hidden">
-                    {group?.inviteLink && (
-                      <InviteCard tokenId={group!.inviteLink} />
+                    {group?.invite_link && (
+                      <InviteCard tokenId={group!.invite_link} />
                     )}
                   </div>
                 </div>
@@ -239,7 +237,7 @@ export default function GroupManagementModal({
                         <Input
                           id="max-bets"
                           type="number"
-                          value={maxBets}
+                          value={max_bets}
                           onChange={(e) => setMaxBets(parseInt(e.target.value))}
                           className="mt-2"
                         />
@@ -249,9 +247,9 @@ export default function GroupManagementModal({
                         <Input
                           id="deadline"
                           type="date"
-                          value={deadline.toISOString().split("T")[0]}
+                          value={new Date(deadline).toISOString().split("T")[0]}
                           onChange={(e) =>
-                            setDeadline(new Date(e.target.value))
+                            setDeadline(new Date(e.target.value).toISOString())
                           }
                           className="mt-2"
                         />
@@ -275,9 +273,9 @@ export default function GroupManagementModal({
                     {Object.keys(group.members!).map((memberId) => {
                       const member = group.members![memberId];
                       const isAdmin = member.role === "admin";
-                      const isCreator = memberId === group.creatorId;
+                      const isCreator = memberId === group.creator_id;
                       const isCurrentUserAdmin =
-                        group.members![currentUser!.uid]?.role === "admin";
+                        group.members![currentUser!.id]?.role === "admin";
 
                       return (
                         <div

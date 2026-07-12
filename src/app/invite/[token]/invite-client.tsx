@@ -9,8 +9,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { joinGroup } from "@/lib/firestore/groups";
-import { resolveInviteGroup } from "@/lib/firestore/invites";
+import { joinGroup } from "@/lib/db/groups";
+import { resolveInviteGroup } from "@/lib/db/invites";
 import { GroupDoc } from "@/models/Group";
 import { useAuth } from "@/providers/auth-provider";
 import {
@@ -40,7 +40,7 @@ export default function InviteClientPage({ token }: { token: string }) {
           setGroupData(null);
           return;
         }
-        const data = await resolveInviteGroup(token, currentUser?.uid);
+        const data = await resolveInviteGroup(token);
         setGroupData(data);
       } catch (err) {
         console.error(err);
@@ -59,7 +59,7 @@ export default function InviteClientPage({ token }: { token: string }) {
       setJoining(false);
       return;
     }
-    await joinGroup(currentUser?.uid, token);
+    await joinGroup(currentUser?.id, token);
     setJoining(false);
     redirect("/dashboard");
   };
@@ -137,9 +137,9 @@ export default function InviteClientPage({ token }: { token: string }) {
   const isMember: boolean =
     !!currentUser &&
     !!groupData?.members &&
-    !!groupData.members[currentUser.uid];
+    !!groupData.members[currentUser.id];
 
-  const timeLeft = calculateTimeLeft(groupData.deadline);
+  const timeLeft = calculateTimeLeft(new Date(groupData.deadline));
   const isGroupActive = groupData.status === "activo";
   const isProrroga = timeLeft.expired && !isGroupActive;
   const canJoin = !isGroupActive && !isMember;
@@ -168,7 +168,7 @@ export default function InviteClientPage({ token }: { token: string }) {
             <div className="text-sm text-muted-foreground">
               <p>Creado por </p>
               <span className="font-medium">
-                <ResolveUserId userId={groupData.creatorId} />
+                <ResolveUserId userId={groupData.creator_id} />
               </span>
             </div>
           </div>

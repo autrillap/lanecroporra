@@ -1,123 +1,18 @@
-rules_version = '2';
+rules_version='2'
 
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    // User documents
-    match /users/{userId} {
-      allow write: if request.auth != null && request.auth.uid == userId;
-      
-      allow read: if request.auth != null
-    }
-
-    // Groups main collection (holds subcollections)
-    match /groups/{groupId} {
-    
-      // Root-level
-      allow create: if request.auth != null
-        && request.resource.data.creatorId == request.auth.uid
-
-      allow delete: if request.auth != null
-        && get(/databases/$(database)/documents/groups/$(groupId)/members/$(request.auth.uid)).data.role == "admin"; 
-
-      // PUBLIC subcollection
-      match /public/{docId} {
-        allow create: if request.auth != null
-          && request.resource.data.creatorId == request.auth.uid
-
-        allow delete: if request.auth != null
-          && get(/databases/$(database)/documents/groups/$(groupId)/members/$(request.auth.uid)).data.role == "admin"; 
-
-        allow read: if request.auth != null;
-        
-        allow update: if request.auth != null
-          && get(/databases/$(database)/documents/groups/$(groupId)/members/$(request.auth.uid)).data.role == "admin"
-      }
-
-      // PRIVATE subcollection
-      match /private/{docId} {
-        allow create: if request.auth != null
-          && get(/databases/$(database)/documents/groups/$(groupId)/public/data).data.creatorId == request.auth.uid;
-
-        allow delete: if request.auth != null
-          && get(/databases/$(database)/documents/groups/$(groupId)/members/$(request.auth.uid)).data.role == "admin"; 
-
-        allow read: if request.auth != null
-          && exists(/databases/$(database)/documents/groups/$(groupId)/members/$(request.auth.uid));
-
-        allow update: if request.auth != null
-          && (
-            get(/databases/$(database)/documents/groups/$(groupId)/members/$(request.auth.uid)).data.role == "admin"
-
-            || (
-              request.resource.data.diff(resource.data).changedKeys().hasOnly(["activityLog"])
-              && exists(/databases/$(database)/documents/groups/$(groupId)/members/$(request.auth.uid))
-            )
-          );
-
-      }
-
-      // MEMBERS subcollection
-      match /members/{memberId} {
-        allow read: if request.auth != null
-          && exists(/databases/$(database)/documents/groups/$(groupId)/members/$(request.auth.uid));
-
-        allow update: if request.auth != null
-          && request.auth.uid == memberId
-
-        allow update: if request.auth != null
-          && get(/databases/$(database)/documents/groups/$(groupId)/members/$(request.auth.uid)).data.role == "admin";
-
-        allow create: if request.auth != null
-          && request.auth.uid == memberId
-          && (
-            get(/databases/$(database)/documents/groups/$(groupId)/public/data).data.creatorId == request.auth.uid
-            ||
-            (request.resource.data.inviteId is string
-              && exists(/databases/$(database)/documents/invites/$(request.resource.data.inviteId)))
-          );
-          
-
-        allow delete: if request.auth != null
-          && (
-            request.auth.uid == memberId
-            ||
-            get(/databases/$(database)/documents/groups/$(groupId)/members/$(request.auth.uid)).data.role == "admin"
-          )
-      }
-    }
-
-    // Invite documents
-    match /invites/{inviteId} {
-      allow read: if request.auth != null;
-
-      allow create: if request.auth != null
-        && get(/databases/$(database)/documents/groups/$(request.resource.data.groupId)/members/$(request.auth.uid)).data.role == "admin";
-
-      allow delete: if request.auth != null
-        && get(
-      /databases/$(database)/documents/groups/$(resource.data.groupId)/members/$(request.auth.uid)
-    ).data.role == "admin";
-        
-    }
-
-    // Review Record
-    match /review-record/{name} {
-        allow read: if request.auth != null;
-        allow create: if request.auth != null
-          && !exists(/databases/$(database)/documents/review-record/$(name))
-          && request.resource.data.keys().hasOnly(["createdAt", "status"])
-          && request.resource.data.status == "alive";
-        allow update, delete: if false;
-      
-
-      match /lists/{listId} {
-        allow create: if request.auth != null
-          && request.resource.data.userId == request.auth.uid;
-        allow delete: if request.auth != null
-          && resource.data.userId == request.auth.uid;
-        allow read : if request.auth != null
-      }
+    match /{document=**} {
+      // This rule allows anyone with your database reference to view, edit,
+      // and delete all data in your database. It is useful for getting
+      // started, but it is configured to expire after 30 days because it
+      // leaves your app open to attackers. At that time, all client
+      // requests to your database will be denied.
+      //
+      // Make sure to write security rules for your app before that time, or
+      // else all client requests to your database will be denied until you
+      // update your rules.
+      allow read, write: if request.time < timestamp.date(2026, 7, 14);
     }
   }
 }

@@ -1,5 +1,5 @@
-import { resolveInvite } from "@/lib/firestore/invites";
-import { resolveUserId } from "@/lib/firestore/users";
+import { resolveInvite } from "@/lib/db/invites";
+import { resolveUserId } from "@/lib/db/users";
 import { InviteDoc } from "@/models/Invite";
 import { Check, Copy } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -50,7 +50,7 @@ export function InviteCard({ tokenId }: { tokenId: string }) {
     const fetchDisplayName = async () => {
       try {
         setDisplayName(undefined);
-        const name = await resolveUserId(inviteData.createdBy);
+        const name = await resolveUserId(inviteData.created_by);
         setDisplayName(name);
       } catch (error) {
         console.error("Error resolving user ID:", error);
@@ -80,7 +80,7 @@ export function InviteCard({ tokenId }: { tokenId: string }) {
           </p>
           <p className="text-xs text-muted-foreground">
             {inviteData
-              ? `Creado ${timeAgo(inviteData.createdAt)} por ${
+              ? `Creado ${timeAgo(new Date(inviteData.created_at))} por ${
                   displayName ?? "..."
                 }`
               : "Cargando..."}

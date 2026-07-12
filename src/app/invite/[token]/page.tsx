@@ -1,4 +1,4 @@
-import { safeResolveInviteGroup } from "@/lib/firestore/invites";
+import { safeResolveInviteGroup } from "@/lib/db/invites";
 import { Metadata } from "next";
 import InvitePage from "./invite-client";
 

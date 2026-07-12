@@ -3,8 +3,8 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"; // Asumiendo que tienes estos componentes
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { getGroupById } from "@/lib/firestore/groups";
-import { getUserById, removeGroupFromUser } from "@/lib/firestore/users";
+import { getGroupById } from "@/lib/db/groups";
+import { getUserById, removeGroupFromUser } from "@/lib/db/users";
 import { GroupDoc } from "@/models/Group";
 import { UserDoc } from "@/models/User";
 import { useAuth } from "@/providers/auth-provider";
@@ -58,7 +58,7 @@ export function SidebarProvider({ children }: { children: React.ReactNode }) {
       setGroups([]);
       return;
     }
-    const fetchedUserDoc = await getUserById(currentUser.uid);
+    const fetchedUserDoc = await getUserById(currentUser.id);
     if (!fetchedUserDoc) {
       setUserDoc(null);
       setGroups([]);
@@ -66,10 +66,10 @@ export function SidebarProvider({ children }: { children: React.ReactNode }) {
     }
     setUserDoc(fetchedUserDoc);
     const fetchedGroups = await Promise.all(
-      fetchedUserDoc.groups.map(async (groupId: string) => {
-        const fetchedGroup = await getGroupById(groupId, currentUser.uid);
+      (fetchedUserDoc.groups || []).map(async (groupId: string) => {
+        const fetchedGroup = await getGroupById(groupId, currentUser.id);
         if (!fetchedGroup || !fetchedGroup?.members) {
-          await removeGroupFromUser(currentUser.uid, groupId);
+          await removeGroupFromUser(currentUser.id, groupId);
           return null;
         }
         return fetchedGroup;
@@ -161,7 +161,7 @@ export function SidebarProvider({ children }: { children: React.ReactNode }) {
             ) : (
               groups.map((group) => {
                 const isActive = currentGroupId === group.id;
-                const isCreator = group.creatorId === currentUser.uid;
+                const isCreator = group.creator_id === currentUser.id;
 
                 return (
                   <div
@@ -212,14 +212,14 @@ export function SidebarProvider({ children }: { children: React.ReactNode }) {
             <div className="flex flex-col gap-2">
               <div className="flex items-center gap-3 mb-2">
                 <Avatar className="h-9 w-9 border border-border">
-                  <AvatarImage src={userDoc.photoURL} />
+                  <AvatarImage src={userDoc.avatar_url} />
                   <AvatarFallback className="text-xs bg-primary/10">
-                    {userDoc.displayName?.substring(0, 2).toUpperCase()}
+                    {userDoc.name?.substring(0, 2).toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-bold truncate">
-                    {userDoc.displayName}
+                    {userDoc.name}
                   </p>
                   <p className="text-[10px] text-muted-foreground truncate uppercase tracking-tighter">
                     {userDoc.tier || "Free Tier"}

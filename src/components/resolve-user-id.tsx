@@ -1,5 +1,5 @@
 "use client";
-import { resolveUserId } from "@/lib/firestore/users";
+import { resolveUserId } from "@/lib/db/users";
 import { useEffect, useState } from "react";
 
 export function ResolveUserId({ userId }: { userId: string }) {

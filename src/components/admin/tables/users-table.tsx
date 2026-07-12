@@ -55,7 +55,7 @@ export const AdminUsersTable = ({
     key: keyof UserDoc | "groupsLength";
     direction: "asc" | "desc";
   }>({
-    key: "createdAt",
+    key: "created_at",
     direction: "desc",
   });
 
@@ -88,11 +88,11 @@ export const AdminUsersTable = ({
 
   const filteredUsers = [...(allUsers || [])].filter((u) => {
     const matchesSearch =
-      u.displayName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      u.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       u.email.toLowerCase().includes(searchTerm.toLowerCase());
 
     const matchesStatus =
-      statusFilter.length === 0 || statusFilter.includes(u.status);
+      statusFilter.length === 0 || statusFilter.includes(u.status || "");
     const matchesRole =
       roleFilter.length === 0 || roleFilter.includes(u.role || "user");
     const matchesTier =
@@ -151,7 +151,7 @@ export const AdminUsersTable = ({
                     <TableHead className="w-3/12">
                       <Button
                         variant="ghost"
-                        onClick={() => handleSort("displayName")}
+                        onClick={() => handleSort("name")}
                         className="p-0 hover:bg-transparent font-bold"
                       >
                         Usuario <ArrowUpDown className="ml-1 h-3 w-3" />
@@ -207,7 +207,7 @@ export const AdminUsersTable = ({
                       <div className="w-full flex justify-center">
                         <Button
                           variant="ghost"
-                          onClick={() => handleSort("createdAt")}
+                          onClick={() => handleSort("created_at")}
                           className="p-0 hover:bg-transparent font-bold"
                         >
                           Registro <ArrowUpDown className="ml-1 h-3 w-3" />
@@ -222,13 +222,13 @@ export const AdminUsersTable = ({
                 <TableBody>
                   {sortedUsers.map((user) => (
                     <TableRow
-                      key={user.uid}
+                      key={user.id}
                       className="group hover:bg-muted/50 transition-colors"
                     >
                       <TableCell>
                         <div className="flex flex-col">
                           <span className="font-bold truncate max-w-[120px] sm:max-w-none">
-                            {user.displayName}
+                            {user.name}
                           </span>
                           <span className="text-[10px] text-muted-foreground lg:hidden truncate max-w-[120px]">
                             {user.email}
@@ -240,7 +240,7 @@ export const AdminUsersTable = ({
                       </TableCell>
                       <TableCell className="hidden lg:table-cell text-center">
                         <Badge variant="outline" className="font-mono">
-                          {user.groups.length}
+                          {user.groups?.length || 0}
                         </Badge>
                       </TableCell>
 
@@ -268,7 +268,7 @@ export const AdminUsersTable = ({
                         {user.tier || "free"}
                       </TableCell>
                       <TableCell className="hidden sm:table-cell text-xs text-muted-foreground whitespace-nowrap text-center">
-                        {formatDate(user.createdAt)}
+                        {formatDate(new Date(user.created_at))}
                       </TableCell>
                       <TableCell className="text-right px-4">
                         <div className="flex justify-end gap-1">
@@ -325,7 +325,7 @@ export const AdminUsersTable = ({
               <UserIcon className="h-5 w-5 text-primary" />
               Detalles del Usuario
             </DialogTitle>
-            <DialogDescription>ID: {selectedUser?.uid}</DialogDescription>
+            <DialogDescription>ID: {selectedUser?.id}</DialogDescription>
           </DialogHeader>
 
           {selectedUser && (
@@ -336,7 +336,7 @@ export const AdminUsersTable = ({
                     Nombre
                   </p>
                   <p className="text-sm font-semibold">
-                    {selectedUser.displayName}
+                    {selectedUser.name}
                   </p>
                 </div>
                 <div className="space-y-1">
@@ -361,7 +361,7 @@ export const AdminUsersTable = ({
                   </p>
                   <p className="text-sm flex items-center gap-1">
                     <Calendar className="h-3 w-3" />{" "}
-                    {formatDate(selectedUser.createdAt)}
+                    {formatDate(new Date(selectedUser.created_at))}
                   </p>
                 </div>
               </div>

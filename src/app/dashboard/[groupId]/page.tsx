@@ -34,8 +34,8 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { getGroupById, leaveGroup } from "@/lib/firestore/groups";
-import { getUserById, resolveUserId } from "@/lib/firestore/users";
+import { getGroupById, leaveGroup } from "@/lib/db/groups";
+import { getUserById, resolveUserId } from "@/lib/db/users";
 import { timeAgo } from "@/lib/time-ago";
 import { getTimeLeft } from "@/lib/time-left";
 import { BetDoc } from "@/models/Bet";
@@ -90,7 +90,7 @@ export default function GroupPage({
   const fetchGroupData = useCallback(async () => {
     const { groupId } = await params;
     if (groupId && currentUser) {
-      const fetchedGroup = await getGroupById(groupId, currentUser?.uid);
+      const fetchedGroup = await getGroupById(groupId, currentUser?.id);
       setGroup(fetchedGroup);
     }
   }, [params, currentUser]);
@@ -102,7 +102,7 @@ export default function GroupPage({
   useEffect(() => {
     if (group) {
       const updateCountdown = () => {
-        setTimeLeft(getTimeLeft(group.deadline));
+        setTimeLeft(getTimeLeft(new Date(group.deadline)));
       };
 
       updateCountdown();
@@ -115,7 +115,7 @@ export default function GroupPage({
   useEffect(() => {
     if (currentUser && !loading) {
       const fetchUser = async () => {
-        const userData = await getUserById(currentUser.uid);
+        const userData = await getUserById(currentUser.id);
         if (!userData) {
           console.error("User not found");
           setUser(null);
@@ -135,7 +135,7 @@ export default function GroupPage({
   const handleViewMemberList = async (playerUid: string) => {
     if (!group || !group.members) return;
     const memberName = await resolveUserId(playerUid);
-    const memberList = group.members[playerUid].list.bets;
+    const memberList = group.members[playerUid]?.list?.bets;
     if (!memberList || !memberName) return;
     setSelectedMemberList({ name: memberName, list: memberList });
     setShowMemberListModal(true);
@@ -148,7 +148,7 @@ export default function GroupPage({
     if (!group || !user) return;
     setIsLeaving(true);
     try {
-      await leaveGroup(user.uid, group.id);
+      await leaveGroup(user.id, group.id);
       router.push("/dashboard");
     } catch (error) {
       console.error(error);
@@ -174,7 +174,7 @@ export default function GroupPage({
   }
 
   const isAdmin = group?.members
-    ? group?.members[user.uid].role === "admin"
+    ? group?.members[user.id].role === "admin"
     : false;
 
   return (
@@ -189,7 +189,7 @@ export default function GroupPage({
             <h2 className="font-semibold truncate text-center flex-1">
               {group.name}
             </h2>
-            {group.creatorId !== user.uid && (
+            {group.creator_id !== user.id && (
               <Button
                 variant="ghost"
                 size="sm"
@@ -281,7 +281,7 @@ export default function GroupPage({
                     <p className="text-xs font-medium">
                       {
                         Object.values(group.members || {}).filter(
-                          (member) => Object.keys(member.list.bets).length > 0
+                          (member) => Object.keys(member.list?.bets || {}).length > 0
                         ).length
                       }
                       /{Object.keys(group.members!).length}
@@ -303,7 +303,7 @@ export default function GroupPage({
               </div>
               <div className="flex items-center gap-2">
                 {/* Botón Salir (Solo para no-creadores) */}
-                {group.creatorId !== user.uid && (
+                {group.creator_id !== user.id && (
                   <Button
                     variant="outline"
                     size="sm"
@@ -398,7 +398,7 @@ export default function GroupPage({
                       <p className="text-sm font-medium">
                         {
                           Object.values(group.members || {}).filter(
-                            (member) => Object.keys(member.list.bets).length > 0
+                            (member) => Object.keys(member.list?.bets || {}).length > 0
                           ).length
                         }
                         /{Object.keys(group.members!).length} Listas
@@ -426,7 +426,7 @@ export default function GroupPage({
                           ? "Editar Lista"
                           : "Ver Lista"}
                         {/* Warning if any deceased before deadline */}
-                        {group.members![user.uid].list.bets.some(
+                        {(group.members![user.id]?.list?.bets || []).some(
                           (p) => p.status === "deceased"
                         ) &&
                           group.status === "draft" && (
@@ -440,10 +440,10 @@ export default function GroupPage({
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="overflow-y-auto max-h-[55vh]">
-                  {group.members![user.uid] &&
-                  Object.keys(group.members![user.uid].list.bets).length > 0 ? (
+                  {group.members![user.id] &&
+                  Object.keys(group.members![user.id]?.list?.bets || []).length > 0 ? (
                     <div className="space-y-3 max-w-full">
-                      {group.members![user.uid].list.bets.map(
+                      {(group.members![user.id]?.list?.bets || []).map(
                         (person, index) => {
                           // Lógica de iconos de estado
                           const isDeceased = person.status === "deceased";
@@ -451,7 +451,7 @@ export default function GroupPage({
 
                           return (
                             <div
-                              key={person.wikidataId}
+                              key={person.wikidata_id}
                               className="flex items-center gap-3 p-3 rounded-lg border border-border bg-muted/20"
                             >
                               {/* Position number */}
@@ -576,7 +576,7 @@ export default function GroupPage({
                             <p className="font-semibold text-sm lg:text-base">
                               {Object.values(group.members || {}).reduce(
                                 (sum, member) =>
-                                  sum + (member.list?.points || 0),
+                                  sum + ((member.list?.points || 0) || 0),
                                 0
                               )}{" "}
                               pts
@@ -598,7 +598,7 @@ export default function GroupPage({
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-3 text-sm max-h-80 overflow-y-auto">
-                    {group?.activityLog
+                    {(group?.activity_logs || [])
                       .slice()
                       .reverse()
                       .map((log, index) => (
@@ -608,7 +608,7 @@ export default function GroupPage({
                         >
                           <span>{log.message}</span>
                           <span className="text-muted-foreground text-xs sm:text-sm">
-                            {timeAgo(log.timestamp.toDate())}
+                            {timeAgo(new Date(log.created_at || log.timestamp || ''))}
                           </span>
                         </div>
                       ))}
@@ -657,7 +657,7 @@ export default function GroupPage({
               <div className="space-y-3">
                 {selectedMemberList?.list.map((person, index) => (
                   <div
-                    key={person.wikidataId || index}
+                    key={person.wikidata_id || index}
                     className="flex items-center gap-3 p-3 rounded-lg border border-border bg-muted/20"
                   >
                     <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-sm font-bold flex-shrink-0">

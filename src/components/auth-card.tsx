@@ -7,23 +7,22 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { auth } from "@/lib/firebase/clientApp";
-import { createUser } from "@/lib/firestore/users";
-import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
+import { createClient } from "@/lib/supabase/client";
 import { Chrome } from "lucide-react";
 import { Button } from "./ui/button";
 
 export function AuthCard() {
+  const supabase = createClient();
+
   const handleSignIn = async () => {
-    const provider = new GoogleAuthProvider();
-
-    provider.setCustomParameters({
-      prompt: "select_account",
-    });
-
     try {
-      const result = await signInWithPopup(auth, provider);
-      await createUser(result.user);
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+        },
+      });
+      if (error) throw error;
     } catch (error) {
       console.error("Error al iniciar sesión:", error);
     }

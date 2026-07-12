@@ -1,41 +1,49 @@
-import { Timestamp } from "firebase/firestore";
-import { ListDoc } from "./List";
-
-export interface MemberDoc {
-  role: "admin" | "member";
-  list: ListDoc;
-  joinedAt: Date;
-}
+import { BetDoc } from "./Bet";
+import { UserDoc } from "./User";
 
 export interface Log {
+  id: string;
+  group_id: string;
   message: string;
-  timestamp: Timestamp;
+  timestamp?: string;
+  created_at?: string;
+}
+
+export interface MemberDoc {
+  group_id: string;
+  user_id: string;
+  role: "admin" | "member";
+  points: number;
+  joined_at: string;
+  
+  // Relations (populated via join)
+  user?: UserDoc;
+  bets?: BetDoc[];
+  list?: import("./List").ListDoc;
 }
 
 export type MembersMap = Record<string, MemberDoc>;
 
-export type GroupDoc = {
+export interface GroupDoc {
   id: string;
   name: string;
   description: string;
   status: "draft" | "activo" | "finalizado";
-  deadline: Date;
-  creatorId: string;
-  createdAt: Date;
-
-  settings: {
-    maxBets: number;
-  };
-  inviteLink?: string;
-  activityLog: Log[];
+  deadline: string;
+  creator_id: string;
+  created_at: string;
+  max_bets: number;
+  invite_link?: string;
+  
+  // Relations (populated via join)
   members?: MembersMap;
-};
+  activity_logs?: Log[];
+}
 
 export interface UpdateGroupDoc {
   name?: string;
   description?: string;
-  deadline?: Date;
-  settings?: {
-    maxBets?: number;
-  };
+  deadline?: string;
+  max_bets?: number;
+  status?: "draft" | "activo" | "finalizado";
 }
