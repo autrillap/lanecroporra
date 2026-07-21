@@ -7,7 +7,7 @@ import { ArrowLeft, Loader2 } from "lucide-react";
 
 import Link from "next/link";
 import { redirect, useSearchParams } from "next/navigation";
-import { Suspense } from "react";
+import { Suspense, useEffect } from "react";
 
 export default function LoginPageWrapped() {
   return (
@@ -27,9 +27,27 @@ function LoginPage() {
   const { currentUser } = useAuth();
   const searchParams = useSearchParams();
   const returnUrl = searchParams.get("returnUrl");
+  const error = searchParams.get("error");
+
+  useEffect(() => {
+    if (error === "auth") {
+      // Si venimos rebotados del callback con error
+      console.error("Authentication error from callback");
+    }
+  }, [error]);
+
+  useEffect(() => {
+    if (currentUser) {
+      window.location.href = returnUrl || "/dashboard";
+    }
+  }, [currentUser, returnUrl]);
 
   if (currentUser) {
-    redirect(returnUrl || "/dashboard");
+    return (
+      <div className="flex flex-1 w-full items-center justify-center">
+        <Loader2 className="animate-spin" />
+      </div>
+    );
   }
 
   return (

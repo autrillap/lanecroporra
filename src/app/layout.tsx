@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { FloatingMenu } from "@/components/floating-menu";
 import { ThemeProvider } from "@/components/theme-provider";
 import { AuthProvider } from "@/providers/auth-provider";
@@ -123,7 +124,9 @@ html {
             <Toaster />
           </ThemeProvider>
         </AuthProvider>
-        <Analytics />
+        <Suspense fallback={null}>
+          <Analytics />
+        </Suspense>
       </body>
     </html>
   );

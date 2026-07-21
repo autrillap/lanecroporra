@@ -116,3 +116,9 @@ CREATE POLICY "Authenticated can create logs" ON public.activity_logs FOR INSERT
 
 CREATE POLICY "Anyone can view invites" ON public.invites FOR SELECT USING (true);
 CREATE POLICY "Group members can create invites" ON public.invites FOR INSERT WITH CHECK (auth.uid() = created_by);
+
+-- Explicit GRANTS to anon and authenticated roles since auto_expose_new_tables is disabled
+GRANT USAGE ON SCHEMA public TO anon, authenticated;
+GRANT ALL ON ALL TABLES IN SCHEMA public TO anon, authenticated;
+GRANT ALL ON ALL ROUTINES IN SCHEMA public TO anon, authenticated;
+GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO anon, authenticated;

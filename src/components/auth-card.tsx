@@ -10,25 +10,33 @@ import { Separator } from "@/components/ui/separator";
 import { createClient } from "@/lib/supabase/client";
 import { Chrome } from "lucide-react";
 import { Button } from "./ui/button";
+import { useState } from "react";
+import { Provider } from "@supabase/supabase-js";
 
 export function AuthCard() {
   const supabase = createClient();
+  const [loadingProvider, setLoadingProvider] = useState<Provider | null>(null);
 
-  const handleSignIn = async () => {
+  const handleSignIn = async (provider: Provider) => {
     try {
+      setLoadingProvider(provider);
       const { error } = await supabase.auth.signInWithOAuth({
-        provider: "google",
+        provider,
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
+          redirectTo: `${window.location.origin}/auth/callback?next=/dashboard`,
+          // Para Azure (Microsoft) se recomienda solicitar explícitamente el email
+          scopes: provider === "azure" ? "email" : undefined,
         },
       });
       if (error) throw error;
     } catch (error) {
       console.error("Error al iniciar sesión:", error);
+      setLoadingProvider(null);
     }
   };
+
   return (
-    <Card className="border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
+    <Card className="border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-lg">
       <CardHeader className="text-center">
         <CardTitle className="text-2xl sm:text-3xl font-bold text-black dark:text-white font-serif">
           La Necroporra
@@ -39,21 +47,41 @@ export function AuthCard() {
       </CardHeader>
 
       <CardContent className="space-y-6">
-        {/* Google Login Button */}
-        <Button
-          onClick={handleSignIn}
-          className="w-full bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 h-12"
-          size="lg"
-        >
-          <Chrome className="h-5 w-5 mr-3" />
-          Continuar con Google
-        </Button>
+        <div className="space-y-3">
+          {/* Google Login Button */}
+          <Button
+            onClick={() => handleSignIn("google")}
+            disabled={loadingProvider !== null}
+            className="w-full bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 h-12 shadow-sm transition-all"
+            size="lg"
+          >
+            <Chrome className="h-5 w-5 mr-3" />
+            {loadingProvider === "google" ? "Conectando..." : "Continuar con Google"}
+          </Button>
+
+          {/* Microsoft Login Button (Azure) */}
+          <Button
+            onClick={() => handleSignIn("azure")}
+            disabled={loadingProvider !== null}
+            className="w-full bg-[#2F2F2F] hover:bg-[#1f1f1f] text-white border border-transparent h-12 shadow-sm transition-all"
+            size="lg"
+          >
+            {/* Microsoft Logo Icon */}
+            <svg className="h-5 w-5 mr-3" viewBox="0 0 21 21" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect x="1" y="1" width="9" height="9" fill="#F25022"/>
+              <rect x="11" y="1" width="9" height="9" fill="#7FBA00"/>
+              <rect x="1" y="11" width="9" height="9" fill="#00A4EF"/>
+              <rect x="11" y="11" width="9" height="9" fill="#FFB900"/>
+            </svg>
+            {loadingProvider === "azure" ? "Conectando..." : "Continuar con Microsoft"}
+          </Button>
+        </div>
 
         <div className="relative">
           <Separator className="bg-gray-200 dark:bg-gray-700" />
           <div className="absolute inset-0 flex items-center justify-center">
             <span className="bg-white dark:bg-gray-900 px-3 text-sm text-gray-500 dark:text-gray-400">
-              ¿Por qué Google?
+              Sobre la autenticación
             </span>
           </div>
         </div>
