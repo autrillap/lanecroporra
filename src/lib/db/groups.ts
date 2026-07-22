@@ -39,7 +39,7 @@ export async function getGroupById(
   const supabase = createClient();
   const { data, error } = await supabase
     .from("groups")
-    .select("*, members:group_members(*, bets(*)), activity_logs(*)")
+    .select("*, members:group_members(*, bets(*)), activity_logs(*), invites(*)")
     .eq("id", groupId)
     .single();
 
@@ -52,7 +52,18 @@ export async function getGroupById(
       membersMap[m.user_id] = { ...m, list: { bets: m.bets || [], points: m.points || 0 } };
     });
   }
-  const group = { ...data, members: membersMap };
+  
+  let invite_link = data.invite_link;
+  if (data.invites && data.invites.length > 0) {
+    const validInvites = data.invites.filter((i: any) => !i.used && new Date(i.expires_at) > new Date());
+    if (validInvites.length > 0) {
+      validInvites.sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+      invite_link = validInvites[0].token;
+    }
+  }
+
+  const group = { ...data, members: membersMap, invite_link };
+  delete group.invites;
 
   return group as unknown as GroupDoc;
 }
