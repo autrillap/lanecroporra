@@ -96,26 +96,46 @@ ALTER TABLE public.group_members ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.bets ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.activity_logs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.invites ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.review_records ENABLE ROW LEVEL SECURITY;
 
--- Basic Policies (can be refined later)
+-- Complete & Robust RLS Policies
+
+-- 1. Users policies
 CREATE POLICY "Users can view everyone" ON public.users FOR SELECT USING (true);
+CREATE POLICY "Users can insert themselves" ON public.users FOR INSERT WITH CHECK (auth.uid() = id);
 CREATE POLICY "Users can update themselves" ON public.users FOR UPDATE USING (auth.uid() = id);
 
+-- 2. Groups policies
 CREATE POLICY "Anyone can view groups" ON public.groups FOR SELECT USING (true);
 CREATE POLICY "Authenticated can create groups" ON public.groups FOR INSERT WITH CHECK (auth.uid() = creator_id);
 CREATE POLICY "Group creators can update" ON public.groups FOR UPDATE USING (auth.uid() = creator_id);
+CREATE POLICY "Group creators can delete" ON public.groups FOR DELETE USING (auth.uid() = creator_id);
 
+-- 3. Group Members policies
 CREATE POLICY "Anyone can view group members" ON public.group_members FOR SELECT USING (true);
 CREATE POLICY "Users can join groups" ON public.group_members FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Authenticated can update group members" ON public.group_members FOR UPDATE USING (auth.role() = 'authenticated');
+CREATE POLICY "Authenticated can delete group members" ON public.group_members FOR DELETE USING (auth.role() = 'authenticated');
 
+-- 4. Bets policies
 CREATE POLICY "Anyone can view bets" ON public.bets FOR SELECT USING (true);
-CREATE POLICY "Users can manage their bets" ON public.bets FOR ALL USING (auth.uid() = user_id);
+CREATE POLICY "Users can insert their bets" ON public.bets FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Authenticated can update bets" ON public.bets FOR UPDATE USING (auth.role() = 'authenticated');
+CREATE POLICY "Users can delete their bets" ON public.bets FOR DELETE USING (auth.uid() = user_id);
 
+-- 5. Activity Logs policies
 CREATE POLICY "Anyone can view activity logs" ON public.activity_logs FOR SELECT USING (true);
-CREATE POLICY "Authenticated can create logs" ON public.activity_logs FOR INSERT WITH CHECK (auth.uid() IS NOT NULL);
+CREATE POLICY "Authenticated can create logs" ON public.activity_logs FOR INSERT WITH CHECK (auth.role() = 'authenticated');
 
+-- 6. Invites policies
 CREATE POLICY "Anyone can view invites" ON public.invites FOR SELECT USING (true);
 CREATE POLICY "Group members can create invites" ON public.invites FOR INSERT WITH CHECK (auth.uid() = created_by);
+CREATE POLICY "Authenticated can update invites" ON public.invites FOR UPDATE USING (auth.role() = 'authenticated');
+
+-- 7. Review Records policies
+CREATE POLICY "Anyone can view review records" ON public.review_records FOR SELECT USING (true);
+CREATE POLICY "Authenticated can insert review records" ON public.review_records FOR INSERT WITH CHECK (auth.role() = 'authenticated');
+CREATE POLICY "Authenticated can update review records" ON public.review_records FOR UPDATE USING (auth.role() = 'authenticated');
 
 -- Explicit GRANTS to anon and authenticated roles since auto_expose_new_tables is disabled
 GRANT USAGE ON SCHEMA public TO anon, authenticated;
