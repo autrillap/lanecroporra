@@ -12,7 +12,9 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useDebounce } from "@/hooks/useDebounce";
-import { getGroupById, updateList } from "@/lib/db/groups";
+import { getGroupById } from "@/lib/db/groups";
+import { actionUpdateList } from "@/actions/groups";
+import { buildWikidataSearchUrl, fetchWikidata } from "@/lib/wikidata";
 import { BetDoc } from "@/models/Bet";
 import { GroupDoc } from "@/models/Group";
 import { ListDoc } from "@/models/List";
@@ -127,13 +129,10 @@ export default function EditListPage({
       }
 
       try {
-        // Step 1: Search Wikidata
-        const searchUrl = `https://www.wikidata.org/w/api.php?action=wbsearchentities&search=${encodeURIComponent(
-          debouncedSearch
-        )}&language=es&format=json&origin=*&type=item`;
-
-        const res = await fetch(searchUrl);
-        const data = await res.json();
+        const searchUrl = buildWikidataSearchUrl(debouncedSearch);
+        const data = await fetchWikidata<{
+          search: Array<{ id: string; label: string; description: string }>;
+        }>(searchUrl);
 
         // Step 2: For each result, fetch details to confirm it's a human
         const humanResults = await Promise.all(
@@ -145,8 +144,8 @@ export default function EditListPage({
             }) => {
               try {
                 const entityUrl = `https://www.wikidata.org/wiki/Special:EntityData/${item.id}.json`;
-                const entityRes = await fetch(entityUrl);
-                const entityData = await entityRes.json();
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const entityData: any = await fetchWikidata(entityUrl);
 
                 const entity = entityData.entities[item.id];
 
@@ -163,8 +162,8 @@ export default function EditListPage({
 
                 // Check "instance of" human
                 const isHuman = (claims.P31 || []).some(
-                  (c: { mainsnak: { datavalue: { value: { id: string } } } }) =>
-                    c.mainsnak.datavalue?.value?.id === "Q5"
+                  (c: { mainsnak?: { datavalue?: { value?: { id?: string } } } }) =>
+                    c?.mainsnak?.datavalue?.value?.id === "Q5"
                 );
                 if (!isHuman) return null;
 
@@ -219,7 +218,7 @@ export default function EditListPage({
           )
         );
 
-        setFilteredSuggestions(humanResults.filter(Boolean));
+        setFilteredSuggestions(humanResults.filter((r): r is WikiSuggestion => r !== null));
       } catch (err) {
         console.error("Wikidata search error", err);
       }
@@ -248,7 +247,14 @@ export default function EditListPage({
   };
 
   const saveList = async () => {
-    await updateList(groupId!, currentUser!.id, currentList);
+    await actionUpdateList(groupId!, currentUser!.id, currentList.bets.map(b => ({
+      wikidata_id: b.wikidata_id,
+      type: b.type,
+      name: b.name,
+      status: b.status,
+      snippet: b.snippet || '',
+      age: b.age ?? null,
+    })));
     setHasChanges(false);
     redirect("/dashboard/" + groupId);
   };

@@ -28,15 +28,15 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { GroupDoc } from "@/models/Group";
 import {
-  deleteGroup,
-  leaveGroup,
-  promoteToAdmin,
-  setNameStatusAcrossGroup,
-  updateGroup,
-} from "@/lib/db/groups";
-import { generateInvite } from "@/lib/db/invites";
-import { GroupDoc, UpdateGroupDoc } from "@/models/Group";
+  actionDeleteGroup,
+  actionKickMember,
+  actionPromoteToAdmin,
+  actionSetNameStatusAcrossGroup,
+  actionUpdateGroup,
+} from "@/actions/groups";
+import { actionCreateInvite } from "@/actions/invites";
 import { useAuth } from "@/providers/auth-provider";
 import { useSidebar } from "@/providers/sidebar-provider";
 import {
@@ -89,18 +89,18 @@ export default function GroupManagementModal({
 
   // === Actions ===
   const handleGenerateNewInvite = async () => {
-    await generateInvite(group.id, currentUser!.id);
+    await actionCreateInvite(group.id);
     reloadGroupData();
   };
 
-  const handleConfirmKickMember = (memberId: string) => {
-    leaveGroup(memberId, group.id);
+  const handleConfirmKickMember = async (memberId: string) => {
+    await actionKickMember(group.id, memberId);
     setMemberToKick(null);
     reloadGroupData();
   };
 
   const handleConfirmDeleteGroup = async () => {
-    await deleteGroup(group.id, currentUser.id);
+    await actionDeleteGroup(group.id);
     setDeleteDialogOpen(false);
     reloadGroupData();
     reloadGroups();
@@ -110,13 +110,12 @@ export default function GroupManagementModal({
   const handleSaveChanges = async () => {
     try {
       setSaving(true);
-      const updatedGroup: UpdateGroupDoc = {
+      await actionUpdateGroup(group.id, {
         name: groupName,
         description: groupDescription,
         deadline: deadline,
         max_bets: max_bets,
-      };
-      await updateGroup(group.id, updatedGroup);
+      });
       reloadGroupData();
     } catch (error) {
       console.error("Error updating group: ", error);
@@ -302,7 +301,7 @@ export default function GroupManagementModal({
                                 size="sm"
                                 variant="outline"
                                 onClick={async () => {
-                                  await promoteToAdmin(group.id, memberId);
+                                  await actionPromoteToAdmin(group.id, memberId);
                                   reloadGroupData();
                                 }}
                                 className="text-clip"
@@ -429,7 +428,7 @@ export default function GroupManagementModal({
                                   variant="destructive"
                                   disabled={allDeceased}
                                   onClick={async () => {
-                                    await setNameStatusAcrossGroup(
+                                    await actionSetNameStatusAcrossGroup(
                                       group.id,
                                       displayName,
                                       "deceased"
@@ -452,7 +451,7 @@ export default function GroupManagementModal({
                                   variant="outline"
                                   disabled={alive === total}
                                   onClick={async () => {
-                                    await setNameStatusAcrossGroup(
+                                    await actionSetNameStatusAcrossGroup(
                                       group.id,
                                       displayName,
                                       "alive"

@@ -8,6 +8,7 @@ import { GeistSans } from "geist/font/sans";
 import type { Metadata } from "next";
 import { Playfair_Display } from "next/font/google";
 import { Toaster } from "sonner";
+import { SITE_URL } from "@/lib/config";
 import "./globals.css";
 
 const playfair = Playfair_Display({
@@ -15,6 +16,8 @@ const playfair = Playfair_Display({
   display: "swap",
   variable: "--font-playfair",
 });
+
+const siteUrlObj = new URL(SITE_URL);
 
 export const metadata: Metadata = {
   title: "La Necroporra - El Reto Anual más Controvertido",
@@ -31,14 +34,14 @@ export const metadata: Metadata = {
   ],
   authors: [
     { name: "Pablo Garcia Rius", url: "https://pablogrius.com" },
-    { name: "La Necroporra", url: "https://lanecroporra.com" },
+    { name: "La Necroporra", url: SITE_URL },
   ],
-  metadataBase: new URL("https://lanecroporra.com"),
+  metadataBase: siteUrlObj,
   openGraph: {
     title: "La Necroporra - El Reto Anual más Controvertido",
     description:
       "Únete al reto viral de España. Crea tu lista de famosos y compite con tus amigos en La Necroporra.",
-    url: "https://lanecroporra.com",
+    url: SITE_URL,
     siteName: "La Necroporra",
     images: [
       {
@@ -94,13 +97,13 @@ html {
               "@context": "https://schema.org",
               "@type": "WebSite",
               name: "La Necroporra",
-              url: "https://lanecroporra.com",
+              url: SITE_URL,
               description:
                 "Únete al reto viral de España. Crea tu lista de famosos y compite con tus amigos en La Necroporra.",
               publisher: {
                 "@type": "Organization",
                 name: "La Necroporra",
-                logo: "https://lanecroporra.com/logo.png",
+                logo: `${SITE_URL}/logo.png`,
               },
             }),
           }}

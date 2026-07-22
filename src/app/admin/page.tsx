@@ -23,8 +23,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getAllGroups } from "@/lib/db/groups";
-import { reviewAllRecords } from "@/lib/db/review-record";
 import { getAllUsers, getUserById } from "@/lib/db/users";
+import { actionReviewAllRecords, actionCloseAllLists } from "@/actions/admin";
 import { GroupDoc } from "@/models/Group";
 import { UserDoc } from "@/models/User";
 import { useAuth } from "@/providers/auth-provider";
@@ -164,19 +164,28 @@ function AdminContent() {
 
   const handleRunDeceaseCheck = async () => {
     setIsProcessing(true);
-    await reviewAllRecords();
+    try {
+      const result = await actionReviewAllRecords();
+      alert(result);
+    } catch (err) {
+      console.error(err);
+      alert("Error al ejecutar la detección");
+    }
     setIsProcessing(false);
     setShowDeceaseDialog(false);
   };
 
-  const handleCloseAllLists = () => {
+  const handleCloseAllLists = async () => {
     setIsProcessing(true);
-    // Simulate processing
-    setTimeout(() => {
-      setIsProcessing(false);
-      setShowCloseAllDialog(false);
-      alert("Todas las listas han sido cerradas correctamente.");
-    }, 1500);
+    try {
+      const result = await actionCloseAllLists();
+      alert(result);
+    } catch (err) {
+      console.error(err);
+      alert("Error al cerrar las listas");
+    }
+    setIsProcessing(false);
+    setShowCloseAllDialog(false);
   };
 
   return (

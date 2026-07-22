@@ -9,7 +9,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { joinGroup } from "@/lib/db/groups";
+import { actionJoinGroup } from "@/actions/groups";
 import { resolveInviteGroup } from "@/lib/db/invites";
 import { GroupDoc } from "@/models/Group";
 import { useAuth } from "@/providers/auth-provider";
@@ -59,7 +59,7 @@ export default function InviteClientPage({ token }: { token: string }) {
       setJoining(false);
       return;
     }
-    await joinGroup(currentUser?.id, token);
+    await actionJoinGroup(currentUser!.id, token);
     setJoining(false);
     redirect("/dashboard");
   };

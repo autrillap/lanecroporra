@@ -11,7 +11,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { createGroup } from "@/lib/db/groups";
+import { actionCreateGroup } from "@/actions/groups";
 import { useAuth } from "@/providers/auth-provider";
 import { useSidebar } from "@/providers/sidebar-provider";
 import { ArrowLeft, ArrowRight, Settings, Users } from "lucide-react";
@@ -36,9 +36,9 @@ export default function CreateGroup() {
       if (currentStep < 2) {
         setCurrentStep(currentStep + 1);
       } else {
-        const { groupId } = await createGroup({
-          ...groupData,
-          creator_id: currentUser!.id,
+        const { groupId } = await actionCreateGroup({
+          name: groupData.name,
+          description: groupData.description,
           deadline: new Date(groupData.deadline).toISOString(),
           max_bets: groupData.max_bets,
         });

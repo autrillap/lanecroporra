@@ -34,7 +34,8 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { getGroupById, leaveGroup } from "@/lib/db/groups";
+import { getGroupById } from "@/lib/db/groups";
+import { actionLeaveGroup } from "@/actions/groups";
 import { getUserById, resolveUserId } from "@/lib/db/users";
 import { timeAgo } from "@/lib/time-ago";
 import { getTimeLeft } from "@/lib/time-left";
@@ -148,7 +149,7 @@ export default function GroupPage({
     if (!group || !user) return;
     setIsLeaving(true);
     try {
-      await leaveGroup(user.id, group.id);
+      await actionLeaveGroup(user.id, group.id);
       router.push("/dashboard");
     } catch (error) {
       console.error(error);
