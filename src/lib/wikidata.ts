@@ -1,4 +1,4 @@
-const WIKIDATA_URL_PATTERN = /^https:\/\/(www\.)?wikidata\.org\/w\/api\.php\?action=wb(getentities|searchentities)&/
+const WIKIDATA_URL_PATTERN = /^https:\/\/(www\.)?wikidata\.org\/(w\/api\.php\?action=wb(getentities|searchentities)&|wiki\/Special:EntityData\/Q\d+\.json)/
 const WIKIDATA_ALLOWED_ACTIONS = ['wbgetentities', 'wbsearchentities']
 
 export function isValidWikidataUrl(url: string): boolean {
@@ -11,7 +11,7 @@ export function buildWikidataEntityUrl(ids: string[]): string {
     .filter(id => /^Q\d+$/.test(id))
     .slice(0, 50)
   if (validIds.length === 0) throw new Error('No valid Wikidata IDs provided')
-  return `https://www.wikidata.org/w/api.php?action=wbgetentities&ids=${validIds.join('|')}&props=claims&format=json&origin=*`
+  return `https://www.wikidata.org/w/api.php?action=wbgetentities&ids=${validIds.join('|')}&props=claims|labels|descriptions&format=json&origin=*`
 }
 
 export function buildWikidataSearchUrl(query: string): string {

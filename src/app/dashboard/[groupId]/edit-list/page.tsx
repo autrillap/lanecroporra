@@ -14,7 +14,7 @@ import { Input } from "@/components/ui/input";
 import { useDebounce } from "@/hooks/useDebounce";
 import { getGroupById } from "@/lib/db/groups";
 import { actionUpdateList } from "@/actions/groups";
-import { buildWikidataSearchUrl, fetchWikidata } from "@/lib/wikidata";
+import { buildWikidataSearchUrl, fetchWikidata, buildWikidataEntityUrl } from "@/lib/wikidata";
 import { BetDoc } from "@/models/Bet";
 import { GroupDoc } from "@/models/Group";
 import { ListDoc } from "@/models/List";
@@ -143,7 +143,7 @@ export default function EditListPage({
               description: string;
             }) => {
               try {
-                const entityUrl = `https://www.wikidata.org/wiki/Special:EntityData/${item.id}.json`;
+                const entityUrl = buildWikidataEntityUrl([item.id]);
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 const entityData: any = await fetchWikidata(entityUrl);
 
