@@ -4,7 +4,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"; //
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { getGroupById } from "@/lib/db/groups";
-import { getUserById, removeGroupFromUser } from "@/lib/db/users";
+import { ensureUserDoc, removeGroupFromUser } from "@/lib/db/users";
 import { GroupDoc } from "@/models/Group";
 import { UserDoc } from "@/models/User";
 import { useAuth } from "@/providers/auth-provider";
@@ -58,7 +58,7 @@ export function SidebarProvider({ children }: { children: React.ReactNode }) {
       setGroups([]);
       return;
     }
-    const fetchedUserDoc = await getUserById(currentUser.id);
+    const fetchedUserDoc = await ensureUserDoc(currentUser);
     if (!fetchedUserDoc) {
       setUserDoc(null);
       setGroups([]);

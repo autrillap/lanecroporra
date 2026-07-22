@@ -22,9 +22,35 @@ export async function getUserById(id: string): Promise<UserDoc | null> {
     .from("users")
     .select("*")
     .eq("id", id)
-    .single();
+    .maybeSingle();
 
   if (error || !data) return null;
+  return data as UserDoc;
+}
+
+export async function ensureUserDoc(user: { id: string; email?: string; user_metadata?: Record<string, any> }): Promise<UserDoc | null> {
+  const existing = await getUserById(user.id);
+  if (existing) return existing;
+
+  const supabase = createClient();
+  const newUser = {
+    id: user.id,
+    name: user.user_metadata?.full_name || user.email?.split("@")[0] || "Usuario",
+    email: user.email,
+    avatar_url: user.user_metadata?.avatar_url || "",
+  };
+
+  const { data, error } = await supabase
+    .from("users")
+    .upsert(newUser)
+    .select()
+    .maybeSingle();
+
+  if (error) {
+    console.error("Error creating user doc: ", error);
+    return null;
+  }
+
   return data as UserDoc;
 }
 
